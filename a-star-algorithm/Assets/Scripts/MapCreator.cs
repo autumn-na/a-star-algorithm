@@ -9,38 +9,91 @@ public class MapCreator : MonoBehaviour
 
     public Transform cellParent;
 
-    Cell[,] cells;
+    public Cell[,] Cells;
+    public const int MapX = 15;
+    public const int MapY = 15;
+
+    public Character character;
 
     private void Awake()
     {
         Init();
     }
-    void Start()
+    private void Start()
     {
         CreateCharacter();
+        CreateRandomMap();
+        RandomCharacter();
     }
 
-    void Init()
+    private void Init()
     {
-        cells = new Cell[15, 15];
+        Cells = new Cell[MapX, MapY];
 
-        for (int i_x = 0; i_x < 15; i_x++)
+        for (var iX = 0; iX < MapX; iX++)
         {
-            for (int j_y = 0; j_y < 15; j_y++)
+            for (var jY = 0; jY < MapY; jY++)
             {
-                GameObject cellClone = Instantiate(prefCell, cellParent);
-                cellClone.transform.position = new Vector2(i_x, j_y);
+                var cellClone = Instantiate(prefCell, cellParent);
+                cellClone.transform.position = new Vector2(iX, jY);
 
-                cells[i_x, j_y] = cellClone.GetComponent<Cell>();
+                Cells[iX, jY] = cellClone.GetComponent<Cell>();
             }
         }
     }
 
-    void CreateCharacter()
+    public void CreateRandomMap()
     {
-        GameObject cloneCharacter = Instantiate(prefCharacter);
-        Character character = cloneCharacter.GetComponent<Character>();
+        for (var iX = 0; iX < MapX; iX++)
+        {
+            for (var jY = 0; jY < MapY; jY++)
+            {
+                Cells[iX, jY].Type = (Cell.CellType)Random.Range(0, 2);
 
-        character.MoveToCellImmediate(cells[0, 0]);
+                if (Cells[iX, jY].Type == Cell.CellType.Road)
+                {
+                    Cells[iX, jY].Weight = Random.Range(0, Cell.MAXWeight);
+                }
+            }
+        }
+
+        Cells[Random.Range(0, MapX), Random.Range(0, MapY)].Type = Cell.CellType.EndPoint;
+
+        RandomCharacter();
+    }
+
+    public void RandomCharacter()
+    {
+        var randomX = Random.Range(0, MapX);
+        var randomY = Random.Range(0, MapY);
+        
+        while (Cells[randomX, randomY].Type != Cell.CellType.Road)
+        {
+            randomX = Random.Range(0, MapX);
+            randomY = Random.Range(0, MapY);
+        }
+        
+        character.MoveToCellImmediate(Cells[randomX, randomY]);
+    }
+
+    public void ResetMap()
+    {
+        for (var iX = 0; iX < MapX; iX++)
+        {
+            for (var jY = 0; jY < MapY; jY++)
+            {
+                Cells[iX, jY].Type = Cell.CellType.Road;
+            }
+        }
+        
+        character.MoveToCellImmediate(Cells[0, 0]);
+    }
+
+    private void CreateCharacter()
+    {
+        var cloneCharacter = Instantiate(prefCharacter);
+        character = cloneCharacter.GetComponent<Character>();
+
+        character.MoveToCellImmediate(Cells[0, 0]);
     }
 }

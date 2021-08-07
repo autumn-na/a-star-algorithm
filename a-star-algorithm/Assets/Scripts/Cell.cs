@@ -1,60 +1,110 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class Cell : MonoBehaviour
 {
     public enum CellType
     {
-        BLANK,
-        WALL,
-        CHARACTER,
-        STARTING_POINT,
-        END_POINT
+        Road,
+        Wall,
+        EndPoint,
+        Character,
     }
 
-    new SpriteRenderer renderer;
+    private SpriteRenderer _renderer;
 
-    // 0: black, 1: wall
-    private CellType _type = CellType.BLANK;
+    private CellType _type = CellType.Road;
+
     public CellType Type
     {
-        get
-        {
-            return _type;
-        }
+        get => _type;
         set
         {
             _type = value;
-
+            
             switch (value)
             {
-                case CellType.BLANK:
-                    renderer.color = Color.white;
+                case CellType.Road:
+                    _renderer.color = Color.white;
+                    Weight = 0;
                     break;
-                case CellType.WALL:
-                    renderer.color = Color.black;
+                case CellType.Wall:
+                    _renderer.color = Color.black;
+                    Weight = 1;
                     break;
-                case CellType.CHARACTER:
-                    renderer.color = Color.gray;
+                case CellType.EndPoint:
+                    _renderer.color = Color.green;
                     break;
-                case CellType.STARTING_POINT:
-                    renderer.color = Color.green;
+                case CellType.Character:
+                    _renderer.color = Color.gray;
                     break;
-                case CellType.END_POINT:
-                    renderer.color = Color.red;
-                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(value), value, null);
             }
+        }
+    }
+
+    private const int WeightStep = 33;
+    public const float MAXWeight = 0.5f;
+    private float _weight = 0;
+    public float Weight
+    {
+        get => _weight;
+        set
+        {
+            _weight = value;
+            _renderer.color = new Color(1 - Weight, 1 - Weight, 1 - Weight);
         }
     }
 
     private void Awake()
     {
-        renderer = GetComponent<SpriteRenderer>();
+        _renderer = GetComponent<SpriteRenderer>();
     }
 
     private void OnMouseDown()
     {
+        EditMap();
+    }
 
+    private void OnMouseEnter()
+    {
+        if (!Input.GetMouseButton(0)) return;
+
+        EditMap();
+    }
+
+    private void OnMouseOver()
+    {
+        EditWeight();
+    }
+
+    private void EditMap()
+    {
+        if (GameMng.Instance.editType == CellType.EndPoint)
+        {
+            GameMng.Instance.RemoveEndPoint();
+        }
+
+        if (GameMng.Instance.editType == CellType.Character)
+        {
+            if (Type == CellType.Wall)
+            {
+                return;
+            }
+            
+            GameMng.Instance.mapCreator.character.MoveToCellImmediate(this);
+            return;
+        }
+        
+        Type = GameMng.Instance.editType;
+    }
+
+    private void EditWeight()
+    {
+        if (Type == CellType.Road)
+        {
+            Weight = Mathf.Min(Mathf.Max(0, Weight + Input.mouseScrollDelta.y / WeightStep), MAXWeight);
+        }
     }
 }
