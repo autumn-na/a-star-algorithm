@@ -5,6 +5,8 @@ using UnityEngine;
 public class MapCreator : MonoBehaviour
 {
     public GameObject prefCell;
+    public GameObject prefCharacter;
+
     public Transform cellParent;
 
     Cell[,] cells;
@@ -15,7 +17,7 @@ public class MapCreator : MonoBehaviour
     }
     void Start()
     {
-        CreateRandomMap();
+        CreateCharacter();
     }
 
     void Init()
@@ -34,14 +36,11 @@ public class MapCreator : MonoBehaviour
         }
     }
 
-    void CreateRandomMap()
+    void CreateCharacter()
     {
-        for (int i_x = 0; i_x < 15; i_x++)
-        {
-            for (int j_y = 0; j_y < 15; j_y++)
-            {
-                cells[i_x, j_y].Type = Random.Range(0, 2);
-            }
-        }
+        GameObject cloneCharacter = Instantiate(prefCharacter);
+        Character character = cloneCharacter.GetComponent<Character>();
+
+        character.MoveToCellImmediate(cells[0, 0]);
     }
 }

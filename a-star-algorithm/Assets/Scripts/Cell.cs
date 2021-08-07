@@ -4,9 +4,20 @@ using UnityEngine;
 
 public class Cell : MonoBehaviour
 {
+    public enum CellType
+    {
+        BLANK,
+        WALL,
+        CHARACTER,
+        STARTING_POINT,
+        END_POINT
+    }
+
+    new SpriteRenderer renderer;
+
     // 0: black, 1: wall
-    private int _type = 0;
-    public int Type
+    private CellType _type = CellType.BLANK;
+    public CellType Type
     {
         get
         {
@@ -15,14 +26,35 @@ public class Cell : MonoBehaviour
         set
         {
             _type = value;
-            if(value == 0) GetComponent<SpriteRenderer>().color = Color.white;
-            else GetComponent<SpriteRenderer>().color = Color.black;
+
+            switch (value)
+            {
+                case CellType.BLANK:
+                    renderer.color = Color.white;
+                    break;
+                case CellType.WALL:
+                    renderer.color = Color.black;
+                    break;
+                case CellType.CHARACTER:
+                    renderer.color = Color.gray;
+                    break;
+                case CellType.STARTING_POINT:
+                    renderer.color = Color.green;
+                    break;
+                case CellType.END_POINT:
+                    renderer.color = Color.red;
+                    break;
+            }
         }
+    }
+
+    private void Awake()
+    {
+        renderer = GetComponent<SpriteRenderer>();
     }
 
     private void OnMouseDown()
     {
-        if (Type == 0) Type = 1;
-        else Type = 0;
+
     }
 }
