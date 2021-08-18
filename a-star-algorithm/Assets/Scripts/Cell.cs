@@ -26,14 +26,15 @@ public class Cell : MonoBehaviour
             {
                 case CellType.Road:
                     _renderer.color = Color.white;
-                    Weight = 0;
+                    Weight = MINWeight;
                     break;
                 case CellType.Wall:
                     _renderer.color = Color.black;
-                    Weight = 1;
+                    Weight = 999;
                     break;
                 case CellType.EndPoint:
                     _renderer.color = Color.green;
+                    Weight = MINWeight;
                     break;
                 case CellType.Character:
                     _renderer.color = Color.gray;
@@ -44,7 +45,10 @@ public class Cell : MonoBehaviour
         }
     }
 
+    public Cell parent = null;
+
     private const int WeightStep = 33;
+    public const float MINWeight = 0f;
     public const float MAXWeight = 0.5f;
     private float _weight = 0;
     public float Weight
@@ -53,13 +57,17 @@ public class Cell : MonoBehaviour
         set
         {
             _weight = value;
-            _renderer.color = new Color(1 - Weight, 1 - Weight, 1 - Weight);
+            if (Type != CellType.EndPoint)
+            {
+                _renderer.color = new Color(1 - Weight, 1 - Weight, 1 - Weight);
+            }
         }
     }
 
     private void Awake()
     {
         _renderer = GetComponent<SpriteRenderer>();
+        parent = null;
     }
 
     private void OnMouseDown()
@@ -104,7 +112,7 @@ public class Cell : MonoBehaviour
     {
         if (Type == CellType.Road)
         {
-            Weight = Mathf.Min(Mathf.Max(0, Weight + Input.mouseScrollDelta.y / WeightStep), MAXWeight);
+            Weight = Mathf.Min(Mathf.Max(MINWeight, Weight + Input.mouseScrollDelta.y / WeightStep), MAXWeight);
         }
     }
 }

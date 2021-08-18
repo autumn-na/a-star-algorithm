@@ -15,4 +15,9 @@ public class UICtrl : MonoBehaviour
     {
         GameMng.Instance.editType = (Cell.CellType)cellTypeInt;
     }
+
+    public void RunAStar()
+    {
+        GameMng.Instance.mapCreator.character.GetComponent<AStar>().RunAStar();
+    }
 }

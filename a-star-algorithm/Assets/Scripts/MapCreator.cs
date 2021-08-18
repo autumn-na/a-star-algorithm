@@ -1,6 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngineInternal;
+using Random = UnityEngine.Random;
 
 public class MapCreator : MonoBehaviour
 {
@@ -44,6 +47,8 @@ public class MapCreator : MonoBehaviour
 
     public void CreateRandomMap()
     {
+        ResetMap();
+        
         for (var iX = 0; iX < MapX; iX++)
         {
             for (var jY = 0; jY < MapY; jY++)
@@ -52,7 +57,7 @@ public class MapCreator : MonoBehaviour
 
                 if (Cells[iX, jY].Type == Cell.CellType.Road)
                 {
-                    Cells[iX, jY].Weight = Random.Range(0, Cell.MAXWeight);
+                    Cells[iX, jY].Weight = Random.Range(Cell.MINWeight, Cell.MAXWeight);
                 }
             }
         }
@@ -83,6 +88,10 @@ public class MapCreator : MonoBehaviour
             for (var jY = 0; jY < MapY; jY++)
             {
                 Cells[iX, jY].Type = Cell.CellType.Road;
+                Cells[iX, jY].parent = null;
+
+                character.Init();
+                character.GetComponent<AStar>().Init();
             }
         }
         
@@ -95,5 +104,41 @@ public class MapCreator : MonoBehaviour
         character = cloneCharacter.GetComponent<Character>();
 
         character.MoveToCellImmediate(Cells[0, 0]);
+    }
+
+    public Vector2 CellToPos(Cell cell)
+    {
+        var result = new Vector2(-1, -1);
+        
+        for (var iX = 0; iX < MapX; iX++)
+        {
+            for (var jY = 0; jY < MapY; jY++)
+            {
+                if (Cells[iX, jY] != cell) continue;
+                result.x = iX;
+                result.y = jY;
+                    
+                return result;
+            }
+        }
+
+        return result;
+    }
+
+    public Cell PosToCell(Vector2 vec2)
+    {
+        try
+        {
+            return Cells[(int) vec2.x, (int) vec2.y];
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+    public static bool IsEnable(Vector2 vec2)
+    {
+        return !(vec2.x < 0 | vec2.x >= MapX | vec2.y < 0 | vec2.y >= MapY);
     }
 }
