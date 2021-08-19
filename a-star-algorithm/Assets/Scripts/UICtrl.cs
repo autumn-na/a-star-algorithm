@@ -1,23 +1,48 @@
 using System;
+using UnityEditor.U2D;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UICtrl : MonoBehaviour
+namespace Scripts
 {
-    public Dropdown dropDown;
+    public delegate void EditEventHandler(int cellTypeInt);
+    public delegate void AStarEventHandler();
 
-    private void Start()
+    public class UICtrl : MonoBehaviour
     {
-        dropDown.onValueChanged.AddListener(SetEditType);
-    }
+        public static UICtrl Instance;
+        public Dropdown dropDown;
+        public event EditEventHandler EditEvent;
+        public event AStarEventHandler AStarEvent;
 
-    private static void SetEditType(int cellTypeInt)
-    {
-        GameMng.Instance.editType = (Cell.CellType)cellTypeInt;
-    }
+        private void RunEditEvent(int cellTypeInt)
+        {
+            EditEvent?.Invoke(cellTypeInt);
+        }
 
-    public void RunAStar()
-    {
-        GameMng.Instance.mapCreator.character.GetComponent<AStar>().RunAStar();
+        private void RunAStarEvent()
+        {
+            AStarEvent?.Invoke();
+        }
+
+        private void Awake()
+        {
+            Instance = this;
+        }
+
+        private void Start()
+        {
+            dropDown.onValueChanged.AddListener(SetEditType);
+        }
+
+        private void SetEditType(int cellTypeInt)
+        {
+            RunEditEvent(cellTypeInt);
+        }
+
+        public void RunAStar()
+        {
+            RunAStarEvent();
+        }
     }
 }

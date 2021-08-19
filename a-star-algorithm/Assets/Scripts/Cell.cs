@@ -1,118 +1,141 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class Cell : MonoBehaviour
+namespace Scripts
 {
-    public enum CellType
+    public class Cell : MonoBehaviour
     {
-        Road,
-        Wall,
-        EndPoint,
-        Character,
-    }
+        private static readonly List<Cell> Cells = new List<Cell>();
+        private SpriteRenderer _renderer;
 
-    private SpriteRenderer _renderer;
+        private CellType _type = CellType.Road;
+        private static CellType _editType;
+        
+        private const int WeightStep = 33;
+        
+        private float _weight;
 
-    private CellType _type = CellType.Road;
-
-    public CellType Type
-    {
-        get => _type;
-        set
+        public enum CellType
         {
-            _type = value;
+            Road,
+            Wall,
+            EndPoint,
+            Character,
+        }
+        
+        public CellType Type
+        {
+            get => _type;
+            set
+            {
+                _type = value;
+
+                switch (value)
+                {
+                    case CellType.Road:
+                        _renderer.color = Color.white;
+                        Weight = MINWeight;
+                        break;
+                    case CellType.Wall:
+                        _renderer.color = Color.black;
+                        Weight = 999;
+                        break;
+                    case CellType.EndPoint:
+                        _renderer.color = Color.green;
+                        Weight = MINWeight;
+                        break;
+                    case CellType.Character:
+                        _renderer.color = Color.gray;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(value), value, null);
+                }
+            }
+        }
+
+        public float Weight
+        {
+            get => _weight;
+            set
+            {
+                _weight = value;
+                if (Type != CellType.EndPoint)
+                {
+                    _renderer.color = new Color(1 - Weight, 1 - Weight, 1 - Weight);
+                }
+            }
+        }
+        
+        public Cell parent;
+        
+        public const float MINWeight = 0f;
+        public const float MAXWeight = 0.5f;
+
+        private void Awake()
+        {
+            Cells.Add(this);
             
-            switch (value)
+            _renderer = GetComponent<SpriteRenderer>();
+            parent = null;
+        }
+
+        private void Start()
+        {
+            UICtrl.Instance.EditEvent += EditHandler;
+        }
+
+        private void OnMouseDown()
+        {
+            EditMap();
+        }
+
+        private void OnMouseEnter()
+        {
+            if (!Input.GetMouseButton(0)) return;
+
+            EditMap();
+        }
+
+        private void OnMouseOver()
+        {
+            EditWeight();
+        }
+
+        private void EditMap()
+        {
+            if (_editType == CellType.EndPoint)
             {
-                case CellType.Road:
-                    _renderer.color = Color.white;
-                    Weight = MINWeight;
-                    break;
-                case CellType.Wall:
-                    _renderer.color = Color.black;
-                    Weight = 999;
-                    break;
-                case CellType.EndPoint:
-                    _renderer.color = Color.green;
-                    Weight = MINWeight;
-                    break;
-                case CellType.Character:
-                    _renderer.color = Color.gray;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(value), value, null);
+                foreach (var cell in Cells.Where(cell => cell.Type == CellType.EndPoint))
+                {
+                    cell.Type = CellType.Road;
+                }
             }
-        }
-    }
-
-    public Cell parent = null;
-
-    private const int WeightStep = 33;
-    public const float MINWeight = 0f;
-    public const float MAXWeight = 0.5f;
-    private float _weight = 0;
-    public float Weight
-    {
-        get => _weight;
-        set
-        {
-            _weight = value;
-            if (Type != CellType.EndPoint)
-            {
-                _renderer.color = new Color(1 - Weight, 1 - Weight, 1 - Weight);
-            }
-        }
-    }
-
-    private void Awake()
-    {
-        _renderer = GetComponent<SpriteRenderer>();
-        parent = null;
-    }
-
-    private void OnMouseDown()
-    {
-        EditMap();
-    }
-
-    private void OnMouseEnter()
-    {
-        if (!Input.GetMouseButton(0)) return;
-
-        EditMap();
-    }
-
-    private void OnMouseOver()
-    {
-        EditWeight();
-    }
-
-    private void EditMap()
-    {
-        if (GameMng.Instance.editType == CellType.EndPoint)
-        {
-            GameMng.Instance.RemoveEndPoint();
-        }
-
-        if (GameMng.Instance.editType == CellType.Character)
-        {
-            if (Type == CellType.Wall)
+            else if (_editType == CellType.Character && Type == CellType.Wall)
             {
                 return;
             }
-            
-            GameMng.Instance.mapCreator.character.MoveToCellImmediate(this);
-            return;
-        }
-        
-        Type = GameMng.Instance.editType;
-    }
+            else if (_editType == CellType.Character)
+            {
+                Character.Instance.MoveToCellImmediate(this);
+                return;
+            }
 
-    private void EditWeight()
-    {
-        if (Type == CellType.Road)
+            Type = _editType;
+        }
+
+        private void EditWeight()
         {
-            Weight = Mathf.Min(Mathf.Max(MINWeight, Weight + Input.mouseScrollDelta.y / WeightStep), MAXWeight);
+            if (Type == CellType.Road)
+            {
+                Weight = Mathf.Min(Mathf.Max(MINWeight, Weight + Input.mouseScrollDelta.y / WeightStep), MAXWeight);
+            }
+        }
+
+        private static void EditHandler(int cellTypeInt)
+        {
+            _editType = (CellType)cellTypeInt;
         }
     }
 }

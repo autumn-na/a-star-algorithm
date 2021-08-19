@@ -1,144 +1,151 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngineInternal;
 using Random = UnityEngine.Random;
 
-public class MapCreator : MonoBehaviour
+namespace Scripts
 {
-    public GameObject prefCell;
-    public GameObject prefCharacter;
+    public delegate void CharacterMoveHandler(Cell cell);
+    public delegate void ResetMapHandler();
 
-    public Transform cellParent;
-
-    public Cell[,] Cells;
-    public const int MapX = 15;
-    public const int MapY = 15;
-
-    public Character character;
-
-    private void Awake()
+    public class MapCreator : MonoBehaviour
     {
-        Init();
-    }
-    private void Start()
-    {
-        CreateCharacter();
-        CreateRandomMap();
-        RandomCharacter();
-    }
-
-    private void Init()
-    {
-        Cells = new Cell[MapX, MapY];
-
-        for (var iX = 0; iX < MapX; iX++)
-        {
-            for (var jY = 0; jY < MapY; jY++)
-            {
-                var cellClone = Instantiate(prefCell, cellParent);
-                cellClone.transform.position = new Vector2(iX, jY);
-
-                Cells[iX, jY] = cellClone.GetComponent<Cell>();
-            }
-        }
-    }
-
-    public void CreateRandomMap()
-    {
-        ResetMap();
+        public static MapCreator Instance;
         
-        for (var iX = 0; iX < MapX; iX++)
-        {
-            for (var jY = 0; jY < MapY; jY++)
-            {
-                Cells[iX, jY].Type = (Cell.CellType)Random.Range(0, 2);
+        public GameObject prefCell;
 
-                if (Cells[iX, jY].Type == Cell.CellType.Road)
+        public Transform cellParent;
+
+        public Cell[,] Cells;
+        
+        private const int MapX = 15;
+        private const int MapY = 15;
+
+        public event CharacterMoveHandler CharacterMoveEvent;
+
+        private void RunCharacterMoveEvent(Cell cell)
+        {
+            CharacterMoveEvent?.Invoke(cell);
+        }
+        
+        public event ResetMapHandler ResetMapEvent;
+
+        private void RunResetMapEvent()
+        {
+            ResetMapEvent?.Invoke();
+        }
+        
+        private void Awake()
+        {
+            Instance = this;
+            CreateCells();
+        }
+        private void Start()
+        {
+            CreateRandomMap();
+        }
+
+        private void CreateCells()
+        {
+            Cells = new Cell[MapX, MapY];
+
+            for (var iX = 0; iX < MapX; iX++)
+            {
+                for (var jY = 0; jY < MapY; jY++)
                 {
-                    Cells[iX, jY].Weight = Random.Range(Cell.MINWeight, Cell.MAXWeight);
+                    var cellClone = Instantiate(prefCell, cellParent);
+                    cellClone.transform.position = new Vector2(iX, jY);
+
+                    Cells[iX, jY] = cellClone.GetComponent<Cell>();
                 }
             }
         }
 
-        Cells[Random.Range(0, MapX), Random.Range(0, MapY)].Type = Cell.CellType.EndPoint;
-
-        RandomCharacter();
-    }
-
-    public void RandomCharacter()
-    {
-        var randomX = Random.Range(0, MapX);
-        var randomY = Random.Range(0, MapY);
-        
-        while (Cells[randomX, randomY].Type != Cell.CellType.Road)
+        public void CreateRandomMap()
         {
-            randomX = Random.Range(0, MapX);
-            randomY = Random.Range(0, MapY);
-        }
+            ResetMap();
         
-        character.MoveToCellImmediate(Cells[randomX, randomY]);
-    }
-
-    public void ResetMap()
-    {
-        for (var iX = 0; iX < MapX; iX++)
-        {
-            for (var jY = 0; jY < MapY; jY++)
+            for (var iX = 0; iX < MapX; iX++)
             {
-                Cells[iX, jY].Type = Cell.CellType.Road;
-                Cells[iX, jY].parent = null;
+                for (var jY = 0; jY < MapY; jY++)
+                {
+                    Cells[iX, jY].Type = (Cell.CellType)Random.Range(0, 2);
 
-                character.Init();
-                character.GetComponent<AStar>().Init();
+                    if (Cells[iX, jY].Type == Cell.CellType.Road)
+                    {
+                        Cells[iX, jY].Weight = Random.Range(Cell.MINWeight, Cell.MAXWeight);
+                    }
+                }
             }
+
+            Cells[Random.Range(0, MapX), Random.Range(0, MapY)].Type = Cell.CellType.EndPoint;
+
+            RandomCharacter();
         }
-        
-        character.MoveToCellImmediate(Cells[0, 0]);
-    }
 
-    private void CreateCharacter()
-    {
-        var cloneCharacter = Instantiate(prefCharacter);
-        character = cloneCharacter.GetComponent<Character>();
-
-        character.MoveToCellImmediate(Cells[0, 0]);
-    }
-
-    public Vector2 CellToPos(Cell cell)
-    {
-        var result = new Vector2(-1, -1);
-        
-        for (var iX = 0; iX < MapX; iX++)
+        public void RandomCharacter()
         {
-            for (var jY = 0; jY < MapY; jY++)
+            var randomX = Random.Range(0, MapX);
+            var randomY = Random.Range(0, MapY);
+        
+            while (Cells[randomX, randomY].Type != Cell.CellType.Road)
             {
-                if (Cells[iX, jY] != cell) continue;
-                result.x = iX;
-                result.y = jY;
+                randomX = Random.Range(0, MapX);
+                randomY = Random.Range(0, MapY);
+            }
+
+            RunCharacterMoveEvent(Cells[randomX, randomY]);
+        }
+
+        public void ResetMap()
+        {
+            for (var iX = 0; iX < MapX; iX++)
+            {
+                for (var jY = 0; jY < MapY; jY++)
+                {
+                    Cells[iX, jY].Type = Cell.CellType.Road;
+                    Cells[iX, jY].parent = null;
                     
-                return result;
+                    RunResetMapEvent();
+                }
+            }
+        
+            RunCharacterMoveEvent(Cells[0, 0]);
+        }
+
+        public Vector2 CellToPos(Cell cell)
+        {
+            var result = new Vector2(-1, -1);
+        
+            for (var iX = 0; iX < MapX; iX++)
+            {
+                for (var jY = 0; jY < MapY; jY++)
+                {
+                    if (Cells[iX, jY] != cell) continue;
+                    result.x = iX;
+                    result.y = jY;
+                    
+                    return result;
+                }
+            }
+
+            return result;
+        }
+
+        public Cell PosToCell(Vector2 vec2)
+        {
+            try
+            {
+                return Cells[(int) vec2.x, (int) vec2.y];
+            }
+            catch
+            {
+                return null;
             }
         }
 
-        return result;
-    }
-
-    public Cell PosToCell(Vector2 vec2)
-    {
-        try
+        public static bool IsEnable(Vector2 vec2)
         {
-            return Cells[(int) vec2.x, (int) vec2.y];
+            return !(vec2.x < 0 | vec2.x >= MapX | vec2.y < 0 | vec2.y >= MapY);
         }
-        catch (Exception e)
-        {
-            return null;
-        }
-    }
-
-    public static bool IsEnable(Vector2 vec2)
-    {
-        return !(vec2.x < 0 | vec2.x >= MapX | vec2.y < 0 | vec2.y >= MapY);
     }
 }

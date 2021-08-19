@@ -2,70 +2,73 @@
 using System.Linq;
 using UnityEngine;
 
-[System.Serializable]
-public class PriorityQueue
+namespace Scripts
 {
-    public readonly List<Vector2> _items;
-    public readonly List<float> _priorities;
-
-    public PriorityQueue()
+    [System.Serializable]
+    public class PriorityQueue
     {
-        _items = new List<Vector2>();
-        _priorities = new List<float>();
-    }
+        private readonly List<Vector2> _items;
+        private readonly List<float> _priorities;
 
-    public void Insert(Vector2 item, float priority)
-    {
-        int index;
-        for (index = 0; index < _priorities.Count; index++)
+        public PriorityQueue()
         {
-            if (priority < _priorities[index])
+            _items = new List<Vector2>();
+            _priorities = new List<float>();
+        }
+
+        public void Insert(Vector2 item, float priority)
+        {
+            int index;
+            for (index = 0; index < _priorities.Count; index++)
             {
-                break;
+                if (priority < _priorities[index])
+                {
+                    break;
+                }
             }
-        }
         
-        _items.Insert(index, item);
-        _priorities.Insert(index, priority);
-    }
-
-    public Vector2 Pop()
-    {
-        var ret = _items[0];
-        _items.RemoveAt(0);
-        _priorities.RemoveAt(0);
-        
-        return ret;
-    }
-
-    public int Count()
-    {
-        return _items.Count;
-    }
-
-    public bool Contains(Vector2 item)
-    {
-        return _items.Any(it => item == it);
-    }
-
-    public float GetPriority(Vector2 item)
-    {
-        for (var i = 0; i < _items.Count; i++)
-        {
-            if (_items[i] == item)
-                return _priorities[i];
+            _items.Insert(index, item);
+            _priorities.Insert(index, priority);
         }
 
-        return -1;
-    }
-
-    public void Remove(Vector2 item)
-    {
-        for (var i = 0; i < _items.Count; i++)
+        public Vector2 Pop()
         {
-            if (item != _items[i]) continue;
-            _items.RemoveAt(i);
-            _priorities.RemoveAt(i);
+            var ret = _items[0];
+            _items.RemoveAt(0);
+            _priorities.RemoveAt(0);
+        
+            return ret;
+        }
+
+        public int Count()
+        {
+            return _items.Count;
+        }
+
+        public bool Contains(Vector2 item)
+        {
+            return _items.Any(it => item == it);
+        }
+
+        public float GetPriority(Vector2 item)
+        {
+            for (var i = 0; i < _items.Count; i++)
+            {
+                if (_items[i] == item)
+                    return _priorities[i];
+            }
+
+            return -1;
+        }
+
+        public void Remove(Vector2 item)
+        {
+            for (var i = 0; i < _items.Count; i++)
+            {
+                if (item != _items[i]) continue;
+                _items.RemoveAt(i);
+                _priorities.RemoveAt(i);
+            }
         }
     }
 }
