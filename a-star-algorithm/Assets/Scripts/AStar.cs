@@ -56,7 +56,7 @@ namespace Scripts
                 foreach (var vec2 in _directions)
                 {
                     var next = current + vec2;
-                    if(_closedList.Contains(next) | !MapCreator.IsEnable(next) || MapCreator.Instance.PosToCell(next).Type == Cell.CellType.Wall) continue;
+                    if(_closedList.Contains(next) || !MapCreator.IsEnable(next) || MapCreator.Instance.PosToCell(next).Type == Cell.CellType.Wall) continue;
 
                     if (_pQueue.Contains(next))
                     {
